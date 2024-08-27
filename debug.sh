@@ -1,0 +1,1 @@
+python3 bag_to_image.py --bag_flie $(pwd)/debug.bag --output_dir $(pwd)/output --image_topic /gmsl_camera/dev/video0/compressed
