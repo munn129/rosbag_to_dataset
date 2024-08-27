@@ -13,10 +13,9 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
 def main():
-    """Extract a folder of images from a rosbag.
-    """
     BAG_FILE_PATH = 'debug.bag'
     IMAGE_TOPIC = '/gmsl_camera/dev/video0/compressed'
+    GPS_TOPIC = '/novatel/oem7/inspva'
     OUTPUT_DIR = './output'
 
     bag = rosbag.Bag(BAG_FILE_PATH, "r")
