@@ -27,6 +27,7 @@ def main():
     if not os.path.exists(IMAGE_2_DIR): os.mkdir(IMAGE_2_DIR)
 
     topics = [POSE_TOPIC, IMAGE_1_TOPIC, IMAGE_2_TOPIC]
+    topic_flags = [False for _ in range(len(topics))]
 
     bag = rosbag.Bag(BAG_FILE_PATH, 'r')
     bridge = CvBridge()
@@ -37,6 +38,8 @@ def main():
     image2_list = []
 
     last_pose = ''
+
+    
 
     for topic, msg, time in bag.read_messages(topics=topics):
 
@@ -55,6 +58,11 @@ def main():
 
         # cv2.imwrite(os.path.join(OUTPUT_DIR, "frame%06i.png" % count), cv_img)
         # print ("Wrote image %i" % count)
+
+        # 1724827817 629 848 429
+        # 1724827817 662 143 810
+        # 1724827817 667 910 809
+        # 1724827817 690 015 336
 
         print(f'topic: {topic}')
         print(f'msg: {type(msg)}')
