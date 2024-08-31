@@ -14,37 +14,66 @@ from nav_msgs.msg import Odometry
 from cv_bridge import CvBridge
 
 from message import Message
+from camera import Camera
+from camera_configs import front, rear, left, right
+
+'''
+2 -> rear
+3 -> front
+4 -> left
+5 -> right
+'''
 
 def main():
+
+    front_camera = Camera(front)
+    rear_camera = Camera(rear)
+    left_camera = Camera(left)
+    right_camera = Camera(right)
+
     BAG_FILE_PATH = 'debug2.bag'
-    IMAGE_1_TOPIC = '/clpe_ros/cam_0/image_raw'
-    IMAGE_2_TOPIC = '/clpe_ros/cam_2/image_raw'
+    FRONT_CAMERA = '/gmsl_camera/dev/video3/compressed'
+    REAR_CAMERA = '/gmsl_camera/dev/video2/compressed'
+    LEFT_CAMERA = '/gmsl_camera/dev/video4/compressed'
+    RIGHT_CAMERA = '/gmsl_camera/dev/video5/compressed'
     POSE_TOPIC = '/kiss/odometry'
+
+    IMAGE1_NAMES = 'img1.txt'
+    IMAGE2_NAMES = 'img2.txt'
+
+    GEOTAGGED_IMAGE1 = 'img11.txt'
+    GEOTAGGED_IMAGE2 = 'img22.txt'
+
+    LOG = 'log.txt'
+    with open(LOG, 'r') as file:
+        file.write(f'pose_time tx ty tz x y z w img1_time img1_dir img2_time img2_dir\n')
+
     OUTPUT_DIR = './output'
-
-    COMPRESSED = False
-
     if not os.path.exists(OUTPUT_DIR): os.mkdir(OUTPUT_DIR)
-    IMAGE_1_DIR = os.path.join(OUTPUT_DIR, 'front')
-    if not os.path.exists(IMAGE_1_DIR): os.mkdir(IMAGE_1_DIR)
-    IMAGE_2_DIR = os.path.join(OUTPUT_DIR, 'left')
-    if not os.path.exists(IMAGE_2_DIR): os.mkdir(IMAGE_2_DIR)
+    FRONT_IMAGE_DIR = os.path.join(OUTPUT_DIR, 'front')
+    if not os.path.exists(FRONT_IMAGE_DIR): os.mkdir(FRONT_IMAGE_DIR)
+    REAR_IMAGE_DIR = os.path.join(OUTPUT_DIR, 'rear')
+    if not os.path.exists(REAR_IMAGE_DIR): os.mkdir(REAR_IMAGE_DIR)
+    LEFT_IMAGE_DIR = os.path.join(OUTPUT_DIR, 'left')
+    if not os.path.exists(LEFT_IMAGE_DIR): os.mkdir(LEFT_IMAGE_DIR)
+    RIGHT_IMAGE_DIR = os.path.join(OUTPUT_DIR, 'right')
+    if not os.path.exists(RIGHT_IMAGE_DIR): os.mkdir(RIGHT_IMAGE_DIR)
 
-    topics = [POSE_TOPIC, IMAGE_1_TOPIC, IMAGE_2_TOPIC]
+    topics = [POSE_TOPIC, FRONT_CAMERA, REAR_CAMERA, LEFT_CAMERA, RIGHT_CAMERA]
 
-    pose__flag = False
-    image1_flag = False
-    image2_flag = False
+    pose_flag = False
+    front_image_flag = False
+    rear_image_flag = False
+    left_image_flag = False
+    right_image_flag = False
 
     bag = rosbag.Bag(BAG_FILE_PATH, 'r')
     bridge = CvBridge()
     count = 0
 
-    pose_topic_list = []
+    pose_list = []
     image1_list = []
     image2_list = []
-
-    last_pose = ''
 
     message_list = []
 
@@ -54,20 +83,49 @@ def main():
 
         if topic == POSE_TOPIC:
             pose_flag = True
-        elif topic == IMAGE_1_TOPIC:
-            image1_flag = True
-        elif topic == IMAGE_2_TOPIC:
-            image2_flag = True
+            pose_list.append(Message(topic, msg, time))
+        elif topic == FRONT_CAMERA:
+            front_image_flag = True
+            image1_list.append(Message(topic, msg, time))
+        elif topic == REAR_CAMERA:
+            rear_image_flag = True
+            image2_list.append(Message(topic, msg, time))
         else:
             print("topic name is not matched.")
 
-        if pose_flag and image1_flag and image2_flag:
-            pass
+        # When all topics have been receieved.
+        if pose_flag and front_image_flag:
+            std_time = pose_list[-1].get_time()
 
-        if COMPRESSED:
-            cv_img = bridge.compressed_imgmsg_to_cv2(msg, desired_encoding='passthrough')
-        else:
-            cv_img = bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+            img1_time_list = []
+            img2_time_list = []
+
+            for m in image1_list:
+                img1_time_list.append(abs(std_time - m.get_time()))
+            
+            for m in image2_list:
+                img2_time_list.append(abs(std_time - m.get_time()))
+
+            # time_approximate
+            img1_min_index = img1_time_list.index(min(img1_time_list))
+            img2_min_index = img2_time_list.index(min(img2_time_list))
+
+            img1_msg = image1_list[img1_min_index].get_msg()
+            img2_msg = image2_list[img2_min_index].get_msg()
+
+            # save image
+            cv_img1 = bridge.compressed_imgmsg_to_cv2(img1_msg, desired_encoding='passthrough')
+            cv_img2 = bridge.compressed_imgmsg_to_cv2(img2_msg, desired_encoding='passthrough')
+            cv2.imwrite(os.path.join(FRONT_IMAGE_DIR, f'{count:06d}.png'), cv_img1)
+            cv2.imwrite(os.path.join(REAR_IMAGE_DIR, f'{count:06d}.png'), cv_img2)
+
+            # initialize
+            pose_flag = False
+            front_image_flag = False
+            rear_image_flag = False
+            pose_list[:] = []
+            image1_list[:] = []
+            image2_list[:] = []
 
         # cv2.imwrite(os.path.join(OUTPUT_DIR, "frame%06i.png" % count), cv_img)
         # print ("Wrote image %i" % count)
@@ -84,8 +142,6 @@ def main():
         count += 1
 
     bag.close()
-
-    return
 
 if __name__ == '__main__':
     main()
