@@ -34,8 +34,21 @@ def image_save(bridge, std_time, img_list, camera, count):
     min_index = time_offset.index(min(time_offset))
     msg = img_list[min_index].get_msg()
 
-    img = bridge.compressed_imgmsg_to_cv2(msg, desired_encoding='bgr8')
-    cv2.imwrite(os.path.join(camera.get_save_dir(), f'{count:06d}.png'), img)
+    img = bridge.compressed_imgmsg_to_cv2(msg, desired_encoding='passthrough')
+    h, w = img.shape[:2]
+    new_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(camera.get_camera_matrix(),
+                                                           camera.get_distortion_coefficients(),
+                                                           (w,h),
+                                                           1,
+                                                           (w,h))
+
+    undistorted_image = cv2.undistort(img,
+                                      camera.get_camera_matrix(),
+                                      camera.get_distortion_coefficients(),
+                                      None,
+                                      new_camera_matrix)
+
+    cv2.imwrite(os.path.join(camera.get_save_dir(), f'{count:06d}.png'), undistorted_image)
 
 def filtering(filtering_time, img_list):
     if img_list[0].get_time() < filtering_time:
@@ -54,19 +67,13 @@ def main():
 
     LOG = 'log.txt'
     with open(LOG, 'w') as file:
-        file.write(f'pose_time tx ty tz x y z w img1_time img1_dir img2_time img2_dir\n')
+        file.write(f'pose_time tx ty tz x y z w img1_time img2_time img3_time img4_time\n')
 
     topics = [POSE_TOPIC,
               front_camera.get_topic(),
               rear_camera.get_topic(),
               left_camera.get_topic(),
               right_camera.get_topic()]
-
-    pose_flag = False
-    front_image_flag = False
-    rear_image_flag = False
-    left_image_flag = False
-    right_image_flag = False
 
     bag = rosbag.Bag(BAG_FILE_PATH, 'r')
     bridge = CvBridge()
@@ -85,34 +92,28 @@ def main():
         message_list.append(Message(topic, msg, time))
 
         if topic == POSE_TOPIC:
-            pose_flag = True
             pose_list.append(Message(topic, msg, time))
         elif topic == front_camera.get_topic():
-            front_image_flag = True
             front_img_list.append(Message(topic, msg, time))
         elif topic == rear_camera.get_topic():
-            rear_image_flag = True
             rear_img_list.append(Message(topic, msg, time))
         elif topic == left_camera.get_topic():
-            left_image_flag = True
             left_img_list.append(Message(topic, msg, time))
         elif topic == right_camera.get_topic():
-            right_image_flag = True
             right_img_list.append(Message(topic, msg, time))
         else:
             print("topic name is not matched.")
 
         # When all topics have been receieved.
-        # if pose_flag and front_image_flag and rear_image_flag and left_image_flag and right_image_flag:
         if len(pose_list) >= 2 and count >= 1:
             std_time = pose_list[-1].get_time()
 
             bridge = CvBridge()
 
-            image_save(bridge, std_time, front_img_list, front, count)
-            image_save(bridge, std_time, rear_img_list, rear, count)
-            image_save(bridge, std_time, left_img_list, left, count)
-            image_save(bridge, std_time, right_img_list, right, count)
+            image_save(bridge, std_time, front_img_list, front_camera, count)
+            image_save(bridge, std_time, rear_img_list, rear_camera, count)
+            image_save(bridge, std_time, left_img_list, left_camera, count)
+            image_save(bridge, std_time, right_img_list, right_camera, count)
 
             # initialize
             filtering_time = pose_list.pop(0).get_time()
@@ -121,6 +122,7 @@ def main():
             filtering(filtering_time, left_img_list)
             filtering(filtering_time, right_img_list)
 
+            count += 1
         # cv2.imwrite(os.path.join(OUTPUT_DIR, "frame%06i.png" % count), cv_img)
         # print ("Wrote image %i" % count)
 
@@ -133,7 +135,6 @@ def main():
         print(f'msg: {type(msg)}')
         print(f'time: {time}')
 
-        count += 1
 
     bag.close()
 
