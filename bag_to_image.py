@@ -24,7 +24,7 @@ from camera_configs import front, rear, left, right
 5 -> right
 '''
 
-def image_save(bridge, std_time, img_list, camera, count):
+def image_save(bridge, std_time, img_list, camera, count, undistort = False, logging = False):
 
     time_offset = []
 
@@ -35,20 +35,29 @@ def image_save(bridge, std_time, img_list, camera, count):
     msg = img_list[min_index].get_msg()
 
     img = bridge.compressed_imgmsg_to_cv2(msg, desired_encoding='passthrough')
-    h, w = img.shape[:2]
-    new_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(camera.get_camera_matrix(),
-                                                           camera.get_distortion_coefficients(),
-                                                           (w,h),
-                                                           1,
-                                                           (w,h))
+    if undistort:
+        h, w = img.shape[:2]
+        new_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(camera.get_camera_matrix(),
+                                                            camera.get_distortion_coefficients(),
+                                                            (w,h),
+                                                            1,
+                                                            (w,h))
 
-    undistorted_image = cv2.undistort(img,
-                                      camera.get_camera_matrix(),
-                                      camera.get_distortion_coefficients(),
-                                      None,
-                                      new_camera_matrix)
+        undistorted_image = cv2.undistort(img,
+                                        camera.get_camera_matrix(),
+                                        camera.get_distortion_coefficients(),
+                                        None,
+                                        new_camera_matrix)
 
-    cv2.imwrite(os.path.join(camera.get_save_dir(), f'{count:06d}.png'), undistorted_image)
+        cv2.imwrite(os.path.join(camera.get_save_dir(), f'{count:06d}.png'), undistorted_image)
+    else:
+        cv2.imwrite(os.path.join(camera.get_save_dir(), f'{count:06d}.png'), img)
+
+    if logging:
+        with open(camera.get_image_names_dir(), 'a') as file:
+            file.write(f'{camera.get_position()}/{count:06d}.png')
+        with open(camera.get_geotagged_image_dir(), 'a') as file:
+            file.write(f'{camera.get_position()}/{count:06d}.png')
 
 def filtering(filtering_time, img_list):
     if img_list[0].get_time() < filtering_time:
