@@ -19,3 +19,6 @@ class Camera:
     
     def get_param(self):
         return self.param
+    
+    def get_save_dir(self):
+        return self.output_dir

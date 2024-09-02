@@ -11,4 +11,4 @@ class Message:
         return self.msg
     
     def get_time(self) -> int:
-        return int(self.time)
+        return int(str(self.time))

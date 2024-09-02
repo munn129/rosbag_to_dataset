@@ -24,42 +24,43 @@ from camera_configs import front, rear, left, right
 5 -> right
 '''
 
+def image_save(bridge, std_time, img_list, camera, count):
+
+    time_offset = []
+
+    for m in img_list:
+        time_offset.append(abs(std_time - m.get_time()))
+
+    min_index = time_offset.index(min(time_offset))
+    msg = img_list[min_index].get_msg()
+
+    img = bridge.compressed_imgmsg_to_cv2(msg, desired_encoding='bgr8')
+    cv2.imwrite(os.path.join(camera.get_save_dir(), f'{count:06d}.png'), img)
+
+def filtering(filtering_time, img_list):
+    if img_list[0].get_time() < filtering_time:
+        img_list.pop(0)
+        filtering(filtering_time, img_list)
+
 def main():
 
-    front_camera = Camera(front)
-    rear_camera = Camera(rear)
-    left_camera = Camera(left)
-    right_camera = Camera(right)
+    BAG_FILE_PATH = '/media/moon/T7/2024-08-28-20-17-09_dataset.bag'
+    POSE_TOPIC = '/lidar_points'
 
-    BAG_FILE_PATH = 'debug2.bag'
-    FRONT_CAMERA = '/gmsl_camera/dev/video3/compressed'
-    REAR_CAMERA = '/gmsl_camera/dev/video2/compressed'
-    LEFT_CAMERA = '/gmsl_camera/dev/video4/compressed'
-    RIGHT_CAMERA = '/gmsl_camera/dev/video5/compressed'
-    POSE_TOPIC = '/kiss/odometry'
-
-    IMAGE1_NAMES = 'img1.txt'
-    IMAGE2_NAMES = 'img2.txt'
-
-    GEOTAGGED_IMAGE1 = 'img11.txt'
-    GEOTAGGED_IMAGE2 = 'img22.txt'
+    front_camera = Camera(**front)
+    rear_camera = Camera(**rear)
+    left_camera = Camera(**left)
+    right_camera = Camera(**right)
 
     LOG = 'log.txt'
-    with open(LOG, 'r') as file:
+    with open(LOG, 'w') as file:
         file.write(f'pose_time tx ty tz x y z w img1_time img1_dir img2_time img2_dir\n')
 
-    OUTPUT_DIR = './output'
-    if not os.path.exists(OUTPUT_DIR): os.mkdir(OUTPUT_DIR)
-    FRONT_IMAGE_DIR = os.path.join(OUTPUT_DIR, 'front')
-    if not os.path.exists(FRONT_IMAGE_DIR): os.mkdir(FRONT_IMAGE_DIR)
-    REAR_IMAGE_DIR = os.path.join(OUTPUT_DIR, 'rear')
-    if not os.path.exists(REAR_IMAGE_DIR): os.mkdir(REAR_IMAGE_DIR)
-    LEFT_IMAGE_DIR = os.path.join(OUTPUT_DIR, 'left')
-    if not os.path.exists(LEFT_IMAGE_DIR): os.mkdir(LEFT_IMAGE_DIR)
-    RIGHT_IMAGE_DIR = os.path.join(OUTPUT_DIR, 'right')
-    if not os.path.exists(RIGHT_IMAGE_DIR): os.mkdir(RIGHT_IMAGE_DIR)
-
-    topics = [POSE_TOPIC, FRONT_CAMERA, REAR_CAMERA, LEFT_CAMERA, RIGHT_CAMERA]
+    topics = [POSE_TOPIC,
+              front_camera.get_topic(),
+              rear_camera.get_topic(),
+              left_camera.get_topic(),
+              right_camera.get_topic()]
 
     pose_flag = False
     front_image_flag = False
@@ -72,8 +73,10 @@ def main():
     count = 0
 
     pose_list = []
-    image1_list = []
-    image2_list = []
+    front_img_list = []
+    rear_img_list = []
+    left_img_list = []
+    right_img_list = []
 
     message_list = []
 
@@ -84,48 +87,39 @@ def main():
         if topic == POSE_TOPIC:
             pose_flag = True
             pose_list.append(Message(topic, msg, time))
-        elif topic == FRONT_CAMERA:
+        elif topic == front_camera.get_topic():
             front_image_flag = True
-            image1_list.append(Message(topic, msg, time))
-        elif topic == REAR_CAMERA:
+            front_img_list.append(Message(topic, msg, time))
+        elif topic == rear_camera.get_topic():
             rear_image_flag = True
-            image2_list.append(Message(topic, msg, time))
+            rear_img_list.append(Message(topic, msg, time))
+        elif topic == left_camera.get_topic():
+            left_image_flag = True
+            left_img_list.append(Message(topic, msg, time))
+        elif topic == right_camera.get_topic():
+            right_image_flag = True
+            right_img_list.append(Message(topic, msg, time))
         else:
             print("topic name is not matched.")
 
         # When all topics have been receieved.
-        if pose_flag and front_image_flag:
+        # if pose_flag and front_image_flag and rear_image_flag and left_image_flag and right_image_flag:
+        if len(pose_list) >= 2 and count >= 1:
             std_time = pose_list[-1].get_time()
 
-            img1_time_list = []
-            img2_time_list = []
+            bridge = CvBridge()
 
-            for m in image1_list:
-                img1_time_list.append(abs(std_time - m.get_time()))
-            
-            for m in image2_list:
-                img2_time_list.append(abs(std_time - m.get_time()))
-
-            # time_approximate
-            img1_min_index = img1_time_list.index(min(img1_time_list))
-            img2_min_index = img2_time_list.index(min(img2_time_list))
-
-            img1_msg = image1_list[img1_min_index].get_msg()
-            img2_msg = image2_list[img2_min_index].get_msg()
-
-            # save image
-            cv_img1 = bridge.compressed_imgmsg_to_cv2(img1_msg, desired_encoding='passthrough')
-            cv_img2 = bridge.compressed_imgmsg_to_cv2(img2_msg, desired_encoding='passthrough')
-            cv2.imwrite(os.path.join(FRONT_IMAGE_DIR, f'{count:06d}.png'), cv_img1)
-            cv2.imwrite(os.path.join(REAR_IMAGE_DIR, f'{count:06d}.png'), cv_img2)
+            image_save(bridge, std_time, front_img_list, front, count)
+            image_save(bridge, std_time, rear_img_list, rear, count)
+            image_save(bridge, std_time, left_img_list, left, count)
+            image_save(bridge, std_time, right_img_list, right, count)
 
             # initialize
-            pose_flag = False
-            front_image_flag = False
-            rear_image_flag = False
-            pose_list[:] = []
-            image1_list[:] = []
-            image2_list[:] = []
+            filtering_time = pose_list.pop(0).get_time()
+            filtering(filtering_time, front_img_list)
+            filtering(filtering_time, rear_img_list)
+            filtering(filtering_time, left_img_list)
+            filtering(filtering_time, right_img_list)
 
         # cv2.imwrite(os.path.join(OUTPUT_DIR, "frame%06i.png" % count), cv_img)
         # print ("Wrote image %i" % count)

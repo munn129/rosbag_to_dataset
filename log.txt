@@ -1,0 +1,1 @@
+pose_time tx ty tz x y z w img1_time img1_dir img2_time img2_dir
