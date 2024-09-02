@@ -4,7 +4,7 @@ class Camera:
     def __init__(self, **kwargs) -> None:
         self.topic = kwargs['topic']
         self.position = kwargs['position']
-        self.camera_metrix = kwargs['camera_metrix']
+        self.camera_metrix = kwargs['camera_matrix']
         self.distortion_coefficients = kwargs['distortion_coefficients']
 
         self.output_dir = os.path.join('.', self.position)

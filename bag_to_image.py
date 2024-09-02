@@ -12,6 +12,7 @@ import rosbag
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from cv_bridge import CvBridge
+from tqdm import tqdm
 
 from message import Message
 from camera import Camera
@@ -35,6 +36,7 @@ def image_save(bridge, std_time, img_list, camera, count, undistort = False, log
     msg = img_list[min_index].get_msg()
 
     img = bridge.compressed_imgmsg_to_cv2(msg, desired_encoding='passthrough')
+    
     if undistort:
         h, w = img.shape[:2]
         new_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(camera.get_camera_matrix(),
@@ -53,11 +55,12 @@ def image_save(bridge, std_time, img_list, camera, count, undistort = False, log
     else:
         cv2.imwrite(os.path.join(camera.get_save_dir(), f'{count:06d}.png'), img)
 
+    with open(camera.get_image_names_dir(), 'a') as file:
+        file.write(f'{camera.get_position()}/{count:06d}.png\n')
+
     if logging:
-        with open(camera.get_image_names_dir(), 'a') as file:
-            file.write(f'{camera.get_position()}/{count:06d}.png')
         with open(camera.get_geotagged_image_dir(), 'a') as file:
-            file.write(f'{camera.get_position()}/{count:06d}.png')
+            file.write(f'{camera.get_position()}/{count:06d}.png\n')
 
 def filtering(filtering_time, img_list):
     if img_list[0].get_time() < filtering_time:
@@ -66,7 +69,7 @@ def filtering(filtering_time, img_list):
 
 def main():
 
-    BAG_FILE_PATH = '/media/moon/T7/2024-08-28-20-17-09_dataset.bag'
+    BAG_FILE_PATH = '/media/moon/T7/2024-08-28-20-41-34_query.bag'
     POSE_TOPIC = '/lidar_points'
 
     front_camera = Camera(**front)
@@ -74,9 +77,9 @@ def main():
     left_camera = Camera(**left)
     right_camera = Camera(**right)
 
-    LOG = 'log.txt'
-    with open(LOG, 'w') as file:
-        file.write(f'pose_time tx ty tz x y z w img1_time img2_time img3_time img4_time\n')
+    # LOG = 'log.txt'
+    # with open(LOG, 'w') as file:
+    #     file.write(f'pose_time tx ty tz x y z w img1_time img2_time img3_time img4_time\n')
 
     topics = [POSE_TOPIC,
               front_camera.get_topic(),
@@ -96,7 +99,7 @@ def main():
 
     message_list = []
 
-    for topic, msg, time in bag.read_messages(topics=topics):
+    for topic, msg, time in tqdm(bag.read_messages(topics=topics)):
 
         message_list.append(Message(topic, msg, time))
 
@@ -114,7 +117,7 @@ def main():
             print("topic name is not matched.")
 
         # When all topics have been receieved.
-        if len(pose_list) >= 2 and count >= 1:
+        if len(pose_list) >= 2:
             std_time = pose_list[-1].get_time()
 
             bridge = CvBridge()
@@ -140,9 +143,9 @@ def main():
         # 1724827817 667 910 809
         # 1724827817 690 015 336
 
-        print(f'topic: {topic}')
-        print(f'msg: {type(msg)}')
-        print(f'time: {time}')
+        # print(f'topic: {topic}')
+        # print(f'msg: {type(msg)}')
+        # print(f'time: {time}')
 
 
     bag.close()
