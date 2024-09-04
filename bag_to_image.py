@@ -9,6 +9,7 @@ import os
 import cv2
 
 import rosbag
+import numpy as np
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from cv_bridge import CvBridge
@@ -25,7 +26,7 @@ from camera_configs import front, rear, left, right
 5 -> right
 '''
 
-def image_save(bridge, std_time, img_list, camera, count, undistort = False, logging = False):
+def image_select(bridge, std_time, img_list, camera, count = None, undistort = False, logging = False):
 
     time_offset = []
 
@@ -51,26 +52,43 @@ def image_save(bridge, std_time, img_list, camera, count, undistort = False, log
                                         None,
                                         new_camera_matrix)
 
-        cv2.imwrite(os.path.join(camera.get_save_dir(), f'{count:06d}.png'), undistorted_image)
+        # cv2.imwrite(os.path.join(camera.get_save_dir(), f'{count:06d}.png'), undistorted_image)
+        return undistorted_image
     else:
-        cv2.imwrite(os.path.join(camera.get_save_dir(), f'{count:06d}.png'), img)
+        # cv2.imwrite(os.path.join(camera.get_save_dir(), f'{count:06d}.png'), img)
+        return img
 
-    with open(camera.get_image_names_dir(), 'a') as file:
-        file.write(f'{camera.get_position()}/{count:06d}.png\n')
+    # with open(camera.get_image_names_dir(), 'a') as file:
+    #     file.write(f'{camera.get_position()}/{count:06d}.png\n')
 
-    if logging:
-        with open(camera.get_geotagged_image_dir(), 'a') as file:
-            file.write(f'{camera.get_position()}/{count:06d}.png\n')
+    # if logging:
+    #     with open(camera.get_geotagged_image_dir(), 'a') as file:
+    #         file.write(f'{camera.get_position()}/{count:06d}.png\n')
 
 def filtering(filtering_time, img_list):
     if img_list[0].get_time() < filtering_time:
         img_list.pop(0)
         filtering(filtering_time, img_list)
 
+def image_concat(images: list):
+    '''
+    image concat
+    sequence of images: list -> front, rear, left, right
+    front | rear  => top
+    -------------
+    left  | right => bottom
+    '''
+
+    top = np.hstack((images[0], images[1]))
+    bottom = np.hstack((images[2], images[3]))
+
+    return np.vstack((top, bottom))
+
 def main():
 
     BAG_FILE_PATH = '/media/moon/T7/2024-08-28-20-41-34_query.bag'
     POSE_TOPIC = '/lidar_points'
+    prefix = 'dataset'
 
     front_camera = Camera(**front)
     rear_camera = Camera(**rear)
@@ -122,10 +140,25 @@ def main():
 
             bridge = CvBridge()
 
-            image_save(bridge, std_time, front_img_list, front_camera, count)
-            image_save(bridge, std_time, rear_img_list, rear_camera, count)
-            image_save(bridge, std_time, left_img_list, left_camera, count)
-            image_save(bridge, std_time, right_img_list, right_camera, count)
+            # image_select(bridge, std_time, front_img_list, front_camera, count)
+            # image_select(bridge, std_time, rear_img_list, rear_camera, count)
+            # image_select(bridge, std_time, left_img_list, left_camera, count)
+            # image_select(bridge, std_time, right_img_list, right_camera, count)
+            
+            images = []
+            images.append(image_select(bridge, std_time, front_img_list, front_camera))
+            images.append(image_select(bridge, std_time, rear_img_list, rear_camera))
+            images.append(image_select(bridge, std_time, left_img_list, left_camera))
+            images.append(image_select(bridge, std_time, right_img_list, right_camera))
+
+            concaten_image = image_concat(images)
+            cv2.imwrite(f'./{prefix}', f'{count:06d}.png', concaten_image)
+
+            with open('image_names.txt', 'a') as file:
+                file.write(f'{prefix}/{count:06d}.png\n')
+
+            # TODO
+            # logging gt
 
             # initialize
             filtering_time = pose_list.pop(0).get_time()
@@ -137,11 +170,6 @@ def main():
             count += 1
         # cv2.imwrite(os.path.join(OUTPUT_DIR, "frame%06i.png" % count), cv_img)
         # print ("Wrote image %i" % count)
-
-        # 1724827817 629 848 429
-        # 1724827817 662 143 810
-        # 1724827817 667 910 809
-        # 1724827817 690 015 336
 
         # print(f'topic: {topic}')
         # print(f'msg: {type(msg)}')
