@@ -17,9 +17,10 @@ from PIL import Image
 from colour_demosaicing import demosaicing_CFA_Bayer_bilinear as demosaic
 import numpy as np
 
-BAYER_STEREO = 'gbrg'
-BAYER_MONO = 'rggb'
-
+# BAYER_STEREO = 'gbrg'
+# BAYER_MONO = 'rggb'
+BAYER_STEREO = 'grbg'
+BAYER_MONO = 'bggr'
 
 def load_image(image_path, model=None, debayer=True):
     """Loads and rectifies an image from file.
