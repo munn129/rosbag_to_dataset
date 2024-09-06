@@ -14,8 +14,8 @@ front: 960*1280
 def main():
     model_dir = './camera-models/'
     images_dir_prefix = '/media/moon/moon_ssd/moon ubuntu/oxford'
-    images_dir = f'{images_dir_prefix}/0514/2014-05-14-13-46-12_stereo_centre_01/2014-05-14-13-46-12/stereo/centre/1400075267901002.png'
-    # images_dir = f'{images_dir_prefix}/0514/2014-05-14-13-46-12_mono_left_01/2014-05-14-13-46-12/mono_left/1400075270860315.png'
+    # images_dir = f'{images_dir_prefix}/0514/2014-05-14-13-46-12_stereo_centre_01/2014-05-14-13-46-12/stereo/centre/1400075267901002.png'
+    images_dir = f'{images_dir_prefix}/0514/2014-05-14-13-46-12_mono_left_01/2014-05-14-13-46-12/mono_left/1400075270860315.png'
 
     camera_model = CameraModel(model_dir, images_dir)
 
