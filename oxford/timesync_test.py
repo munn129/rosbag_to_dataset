@@ -57,7 +57,7 @@ left_flag = False
 right_flag = False
 rear_flag = False
 
-std_time_gap = 30000
+std_time_gap = 30000 # 30ms
 
 def is_synced(cam, ins, std_time_gap, save_list) -> bool:
     if (len(save_list) > 1) and save_list[-1] == cam:
@@ -72,6 +72,7 @@ def is_synced(cam, ins, std_time_gap, save_list) -> bool:
 
 for ins in ins_time_list:
     
+    # append image what satisfy condition(std_time_gap)
     for cam in front_time_list:
         if is_synced(cam, ins, std_time_gap, front_save_list):
             front_flag = True
@@ -93,9 +94,11 @@ for ins in ins_time_list:
             break
 
     # sync check
+    # if all flags are True, it is synced.
     if front_flag and left_flag and right_flag and rear_flag:
         ins_save_list.append(ins)
 
+    # if each images(multi direction) is not synced, pop()
     else:
         if front_flag:
             front_save_list.pop()
@@ -121,53 +124,3 @@ print(f'length of front save list: {len(front_save_list)}')
 print(f'length of left save list: {len(left_save_list)}')
 print(f'length of right save list: {len(right_save_list)}')
 print(f'length of rear save list: {len(rear_save_list)}')
-
-
-'''
-for cam in front_time_list:
-    for ins in ins_time_list:
-        if abs(int(cam) - int(ins)) < 10000:
-            front_save_list.append(cam)
-            break
-print(f'length of front save list: {len(front_save_list)}')
-
-for cam in left_time_list:
-    for ins in ins_time_list:
-        if abs(int(cam) - int(ins)) < 10000:
-            left_save_list.append(cam)
-            break
-print(f'length of left save list: {len(left_save_list)}')
-
-for cam in right_time_list:
-    for ins in ins_time_list:
-        if abs(int(cam) - int(ins)) < 10000:
-            right_save_list.append(cam)
-            break
-print(f'length of right save list: {len(right_save_list)}')
-
-for cam in rear_time_list:
-    for ins in ins_time_list:
-        if abs(int(cam) - int(ins)) < 10000:
-            rear_save_list.append(cam)
-            break
-print(f'length of rear save list: {len(rear_save_list)}')
-'''
-
-
-'''
-with open(front_cam, 'r') as file:
-    for line in file:
-        front_camera_time_list.append(line.split(' ')[0])
-
-print(len(front_camera_time_list))
-
-
-test = []
-for cam in front_camera_time_list:
-    for ins in ins_time_list:
-        if abs(int(cam) - int(ins)) < 10000:
-            test.append(cam)
-            break
-
-print(len(test))
-'''
