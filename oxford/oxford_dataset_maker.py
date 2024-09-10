@@ -51,7 +51,7 @@ def main():
     rear_output = os.path.join(output_prefix, f'{date}/rear')
     concat_output = os.path.join(output_prefix, f'{date}/concat')
 
-    cam_timestamp_list = [front_cam_timestamp, left_cam_timestamp, right_cam_timestamp, rear_cam_timestamp]
+    cam_timestamp_dir = [front_cam_timestamp, left_cam_timestamp, right_cam_timestamp, rear_cam_timestamp]
 
     # read ins.csv and save timestamp and gt(lat, lon, yaw)
     ins_timestamp = []
@@ -64,11 +64,28 @@ def main():
                 ins_timestamp.append(content[0])
                 ins_gt.append((content[2], content[3],content[-1]))
     
-    print('-----------------------------------------------------')
+    print('------------------------PROGRESS REPORT----------------------------')
     print(f'length of ins list: {len(ins_timestamp)}')
     print(f'length of gt list: {len(ins_gt)}')
 
     # read camera timestamps and save with list
+    front_time_list = []
+    left_time_list = []
+    right_time_list = []
+    rear_time_list = []
+
+    cam_time_list = [front_time_list, left_time_list, right_time_list, rear_time_list]
+
+    for input, output in zip(cam_timestamp_dir, cam_time_list):
+        with open(input, 'r') as file:
+            for line in file:
+                output.append(line.split(' ')[0])
+
+    print('------------------------PROGRESS REPORT----------------------------')
+    print(f'length of front time list: {len(front_time_list)}')
+    print(f'length of left time list: {len(left_time_list)}')
+    print(f'length of right time list: {len(right_time_list)}')
+    print(f'length of rear time list: {len(rear_time_list)}')
 
 if __name__ == '__main__':
     main()
