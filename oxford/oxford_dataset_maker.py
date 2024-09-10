@@ -5,6 +5,7 @@ from sdk.camera_model import CameraModel
 from sdk.image import load_image
 
 import cv2
+import numpy as np
 
 def image_undistort(image_dir):
     model = './camera-models'
@@ -22,6 +23,27 @@ def is_synced(cam, ins, std_time_gap, save_list) -> bool:
         return True
     else:
         return False
+    
+def image_concat(images: list):
+    '''
+    image concat
+
+    sequence of images: list -> front, rear, left, right
+    front | rear  => top
+    -------------
+    left  | right => bottom
+
+    front: 960*1280
+    left, right, rear: 1024*1024
+    '''
+
+    # front image resize to size of rear image
+    images[0] = cv2.resize(images[0], images[1].shape[:2])
+
+    top = np.hstack((images[0], images[1]))
+    bottom = np.hstack((images[2], images[3]))
+
+    return np.vstack((top, bottom))
 
 def main():
     # params
@@ -38,18 +60,24 @@ def main():
     rear_cam_prefix = f'{dataset_root_dir}/oxford/{date}/{detail_date}_mono_rear_01/{detail_date}'
 
     front_cam_timestamp = os.path.join(front_cam_prefix, 'stereo.timestamps')
-    left_cam_timestamp = os.path.join(left_cam_prefix, 'stereo.timestamps')
-    right_cam_timestamp = os.path.join(right_cam_prefix, 'stereo.timestamps')
-    rear_cam_timestamp = os.path.join(rear_cam_prefix, 'stereo.timestamps')
+    left_cam_timestamp = os.path.join(left_cam_prefix, 'mono_left.timestamps')
+    right_cam_timestamp = os.path.join(right_cam_prefix, 'mono_right.timestamps')
+    rear_cam_timestamp = os.path.join(rear_cam_prefix, 'mono_rear.timestamps')
 
     # setting output directory
     output_prefix = os.path.join(dataset_root_dir, 'post_oxford')
 
-    front_output = os.path.join(output_prefix, f'{date}/front')
-    left_output = os.path.join(output_prefix, f'{date}/left')
-    right_output = os.path.join(output_prefix, f'{date}/right')
-    rear_output = os.path.join(output_prefix, f'{date}/rear')
-    concat_output = os.path.join(output_prefix, f'{date}/concat')
+    front_post_fix = os.path.join(date, 'front')
+    left_post_fix = os.path.join(date, 'left')
+    right_post_fix = os.path.join(date, 'right')
+    rear_post_fix = os.path.join(date, 'rear')
+    concat_post_fix = os.path.join(date, 'concat')
+
+    front_output = os.path.join(output_prefix, front_post_fix)
+    left_output = os.path.join(output_prefix, left_post_fix)
+    right_output = os.path.join(output_prefix, right_post_fix)
+    rear_output = os.path.join(output_prefix, rear_post_fix)
+    concat_output = os.path.join(output_prefix, concat_post_fix)
 
     cam_timestamp_dir = [front_cam_timestamp, left_cam_timestamp, right_cam_timestamp, rear_cam_timestamp]
 
@@ -152,10 +180,63 @@ def main():
 
     print('------------------------PROGRESS REPORT----------------------------')
     print(f'length of ins save list: {len(ins_save_list)}')
+    print(f'length of gt list: {len(gt)}')
     print(f'length of front save list: {len(front_save_list)}')
     print(f'length of left save list: {len(left_save_list)}')
     print(f'length of right save list: {len(right_save_list)}')
     print(f'length of rear save list: {len(rear_save_list)}')
+
+    front_image_dir = os.path.join(front_cam_prefix, 'stereo', 'centre')
+    left_image_dir = os.path.join(left_cam_prefix, 'mono_left')
+    right_image_dir = os.path.join(right_cam_prefix, 'mono_right')
+    rear_image_dir = os.path.join(rear_cam_prefix, 'mono_rear')
+
+    is_imshow = False
+
+    # save for dataset
+    for idx in range(len(ins_save_list)):
+
+        # image undistort
+        front_image = image_undistort(os.path.join(front_image_dir, str(front_save_list[idx]) + '.png'))
+        left_image = image_undistort(os.path.join(left_image_dir, str(left_save_list[idx]) + '.png'))
+        right_image = image_undistort(os.path.join(right_image_dir, str(right_save_list[idx]) + '.png'))
+        rear_image = image_undistort(os.path.join(rear_image_dir, str(rear_save_list[idx]) + '.png'))
+
+        # image concat
+        concat_image = image_concat([front_image, rear_image, left_image, right_image])
+
+        if is_imshow:
+            while True:
+                cv2.namedWindow('front', cv2.WINDOW_NORMAL)
+                cv2.imshow('front', front_image)
+
+                if cv2.waitKey(1) & 0xFF == ord('q'): break
+
+            while True:
+                cv2.namedWindow('left', cv2.WINDOW_NORMAL)
+                cv2.imshow('left', left_image)
+
+                if cv2.waitKey(1) & 0xFF == ord('q'): break
+            
+            while True:
+                cv2.namedWindow('right', cv2.WINDOW_NORMAL)
+                cv2.imshow('right', right_image)
+
+                if cv2.waitKey(1) & 0xFF == ord('q'): break
+
+            while True:
+                cv2.namedWindow('rear', cv2.WINDOW_NORMAL)
+                cv2.imshow('rear', rear_image)
+
+                if cv2.waitKey(1) & 0xFF == ord('q'): break        
+
+            while True:
+                cv2.namedWindow('concat', cv2.WINDOW_NORMAL)
+                cv2.imshow('concat', concat_image)
+
+                if cv2.waitKey(1) & 0xFF == ord('q'): break
+
+            cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
