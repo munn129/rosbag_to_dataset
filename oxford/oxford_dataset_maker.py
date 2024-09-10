@@ -87,5 +87,75 @@ def main():
     print(f'length of right time list: {len(right_time_list)}')
     print(f'length of rear time list: {len(rear_time_list)}')
 
+    # time synced list
+    ins_save_list = []
+    gt = []
+    front_save_list = []
+    left_save_list = []
+    right_save_list = []
+    rear_save_list = []
+
+    front_flag = False
+    left_flag = False
+    right_flag = False
+    rear_flag = False
+
+    std_time_gap = 30000 # 30ms
+
+    for idx, ins in enumerate(ins_timestamp):
+
+        for cam in front_time_list:
+            if is_synced(cam, ins, std_time_gap, front_save_list):
+                front_flag = True
+                break
+
+        for cam in left_time_list:
+            if is_synced(cam, ins, std_time_gap, left_save_list):
+                left_flag = True
+                break
+        
+        for cam in right_time_list:
+            if is_synced(cam, ins, std_time_gap, right_save_list):
+                right_flag = True
+                break
+
+        for cam in rear_time_list:
+            if is_synced(cam, ins, std_time_gap, rear_save_list):
+                rear_flag = True
+                break
+
+        # sync check
+        # if all flags are True, it is synced.
+        if front_flag and left_flag and right_flag and rear_flag:
+            ins_save_list.append(ins)
+            gt.append(ins_gt[idx])
+
+        # if each images(multi direction) is not synced, pop()
+        else:
+            if front_flag:
+                front_save_list.pop()
+            
+            if left_flag:
+                left_save_list.pop()
+
+            if right_flag:
+                right_save_list.pop()
+
+            if rear_flag:
+                rear_save_list.pop()
+    
+        # flag initialize
+        front_flag = False
+        left_flag = False
+        right_flag = False
+        rear_flag = False
+
+    print('------------------------PROGRESS REPORT----------------------------')
+    print(f'length of ins save list: {len(ins_save_list)}')
+    print(f'length of front save list: {len(front_save_list)}')
+    print(f'length of left save list: {len(left_save_list)}')
+    print(f'length of right save list: {len(right_save_list)}')
+    print(f'length of rear save list: {len(rear_save_list)}')
+
 if __name__ == '__main__':
     main()
