@@ -158,11 +158,9 @@ def main():
             # if all flags are True, it is synced.
             if front_flag and left_flag and right_flag and rear_flag:
                 ins_save_list.append(ins)
-                gt.append(ins_gt[idx])
-
                 # rad to deg
                 # (lat, lon, yaw(rad))
-                gt[-1][-1] = pi / 180 * gt[-1][-1]
+                gt.append((float(ins_gt[idx][0]), float(ins_gt[idx][1]), pi / 180 * float(gt[idx][2])))
 
             # if each images(multi direction) is not synced, pop()
             else:
