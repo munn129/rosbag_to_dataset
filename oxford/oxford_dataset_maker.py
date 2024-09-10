@@ -198,6 +198,11 @@ def main():
 
     is_imshow = False
 
+    position_names = ['front', 'left', 'right', 'rear', 'concat']
+    output_list = [front_output, left_output, right_output, rear_output, concat_output]
+    save_list = [front_save_list, left_save_list, right_save_list, rear_save_list, ins_save_list]
+    postfix_list = [front_post_fix, left_post_fix, right_post_fix, rear_post_fix, concat_post_fix]
+
     # save for dataset
     for idx in range(len(ins_save_list)):
 
@@ -210,26 +215,81 @@ def main():
         # image concat
         concat_image = image_concat([front_image, rear_image, left_image, right_image])
 
+        # packing
+        image_list = [front_image, left_image, right_image, rear_image, concat_image]
+
         # save
-        # image, image names(txt), geotag images(txt), logging
-        # image: return of image_undistort() or image_concat()
-        # image names: f'{date}/{position}/{timestamp}.png'
-        # geotag images: f'{image names} lat lon yaw[deg]'
+        '''
+        image, image names(txt), geotag images(txt), logging
+        image: return of image_undistort() or image_concat()
+        image names: f'{date}/{position}/{timestamp}.png'
+        geotag images: f'{image names} lat lon yaw[deg]'
+        '''
 
+        for position, image ,output, save, postfix in zip(position_names, image_list, output_list, save_list, postfix_list):
+            
+            # image save
+            cv2.imwrite(output, f'{save[idx]}.png', image)
 
-        # image plot
-        if is_imshow:
-            position_names = ['front', 'left', 'right', 'rear', 'concat']
-            image_list = [front_image, left_image, right_image, rear_image, concat_image]
+            # imagenames logging
+            with open(f'{date}_{position}_imagenames.txt', 'a') as file:
+                file.write(f'{postfix}/{save[idx]}.png\n')
 
-            for position, image in zip(position_names, image_list):
+            # geotag image logging
+            with open(f'{date}_{position}_gt.txt', 'a') as file:
+                file.write(f'{postfix}/{save[idx]}.png {gt[idx][0]} {gt[idx][1]} {gt[idx][2]}\n')
+
+            # image plot
+            if is_imshow:
+                    
                 while True:
                     cv2.namedWindow(position, cv2.WINDOW_NORMAL)
                     cv2.imshow(position, image)
 
                     if cv2.waitKey(1) & 0xFF == ord('1'): break
 
-            cv2.destroyAllWindows()
+                cv2.destroyAllWindows()
+
+        # image save
+        cv2.imwrite(front_output, f'{front_save_list[idx]}.png', front_image)
+        cv2.imwrite(left_output, f'{left_save_list[idx]}.png', left_image)
+        cv2.imwrite(right_output, f'{right_save_list[idx]}.png', right_image)
+        cv2.imwrite(rear_output, f'{rear_save_list[idx]}.png', rear_image)
+        cv2.imwrite(concat_output, f'{ins_save_list[idx]}.png', concat_image)
+
+        # imagename logging
+        with open(f'{date}_front_imagenames.txt', 'a') as file:
+            file.write(f'{front_post_fix}/{front_save_list[idx]}.png\n')
+
+        with open(f'{date}_left_imagenames.txt', 'a') as file:
+            file.write(f'{left_post_fix}/{left_save_list[idx]}.png\n')
+
+        with open(f'{date}_right_imagenames.txt', 'a') as file:
+            file.write(f'{right_post_fix}/{right_save_list[idx]}.png\n')
+
+        with open(f'{date}_rear_imagenames.txt', 'a') as file:
+            file.write(f'{rear_post_fix}/{rear_save_list[idx]}.png\n')
+
+        with open(f'{date}_concat_imagenames.txt', 'a') as file:
+            file.write(f'{concat_post_fix}/{ins_save_list[idx]}.png\n')
+
+        # geotag image logging
+        with open(f'{date}_front_gt.txt', 'a') as file:
+            file.write(f'{front_post_fix}/{front_save_list[idx]}.png {gt[idx][0]} {gt[idx][1]} {gt[idx][2]}\n')
+
+        with open(f'{date}_left_gt.txt', 'a') as file:
+            file.write(f'{left_post_fix}/{left_save_list[idx]}.png {gt[idx][0]} {gt[idx][1]} {gt[idx][2]}\n')
+
+        with open(f'{date}_right_gt.txt', 'a') as file:
+            file.write(f'{right_post_fix}/{right_save_list[idx]}.png {gt[idx][0]} {gt[idx][1]} {gt[idx][2]}\n')
+        
+        with open(f'{date}_rear_gt.txt', 'a') as file:
+            file.write(f'{rear_post_fix}/{rear_save_list[idx]}.png {gt[idx][0]} {gt[idx][1]} {gt[idx][2]}\n')
+
+        with open(f'{date}_concat_gt.txt', 'a') as file:
+            file.write(f'{concat_post_fix}/{ins_save_list[idx]}.png {gt[idx][0]} {gt[idx][1]} {gt[idx][2]}\n')
+
+        
 
 if __name__ == '__main__':
     main()
