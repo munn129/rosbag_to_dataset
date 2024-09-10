@@ -250,46 +250,5 @@ def main():
 
                 cv2.destroyAllWindows()
 
-        # image save
-        cv2.imwrite(front_output, f'{front_save_list[idx]}.png', front_image)
-        cv2.imwrite(left_output, f'{left_save_list[idx]}.png', left_image)
-        cv2.imwrite(right_output, f'{right_save_list[idx]}.png', right_image)
-        cv2.imwrite(rear_output, f'{rear_save_list[idx]}.png', rear_image)
-        cv2.imwrite(concat_output, f'{ins_save_list[idx]}.png', concat_image)
-
-        # imagename logging
-        with open(f'{date}_front_imagenames.txt', 'a') as file:
-            file.write(f'{front_post_fix}/{front_save_list[idx]}.png\n')
-
-        with open(f'{date}_left_imagenames.txt', 'a') as file:
-            file.write(f'{left_post_fix}/{left_save_list[idx]}.png\n')
-
-        with open(f'{date}_right_imagenames.txt', 'a') as file:
-            file.write(f'{right_post_fix}/{right_save_list[idx]}.png\n')
-
-        with open(f'{date}_rear_imagenames.txt', 'a') as file:
-            file.write(f'{rear_post_fix}/{rear_save_list[idx]}.png\n')
-
-        with open(f'{date}_concat_imagenames.txt', 'a') as file:
-            file.write(f'{concat_post_fix}/{ins_save_list[idx]}.png\n')
-
-        # geotag image logging
-        with open(f'{date}_front_gt.txt', 'a') as file:
-            file.write(f'{front_post_fix}/{front_save_list[idx]}.png {gt[idx][0]} {gt[idx][1]} {gt[idx][2]}\n')
-
-        with open(f'{date}_left_gt.txt', 'a') as file:
-            file.write(f'{left_post_fix}/{left_save_list[idx]}.png {gt[idx][0]} {gt[idx][1]} {gt[idx][2]}\n')
-
-        with open(f'{date}_right_gt.txt', 'a') as file:
-            file.write(f'{right_post_fix}/{right_save_list[idx]}.png {gt[idx][0]} {gt[idx][1]} {gt[idx][2]}\n')
-        
-        with open(f'{date}_rear_gt.txt', 'a') as file:
-            file.write(f'{rear_post_fix}/{rear_save_list[idx]}.png {gt[idx][0]} {gt[idx][1]} {gt[idx][2]}\n')
-
-        with open(f'{date}_concat_gt.txt', 'a') as file:
-            file.write(f'{concat_post_fix}/{ins_save_list[idx]}.png {gt[idx][0]} {gt[idx][1]} {gt[idx][2]}\n')
-
-        
-
 if __name__ == '__main__':
     main()
