@@ -160,7 +160,7 @@ def main():
                 ins_save_list.append(ins)
                 # rad to deg
                 # (lat, lon, yaw(rad))
-                gt.append((float(ins_gt[idx][0]), float(ins_gt[idx][1]), pi / 180 * float(gt[idx][2])))
+                gt.append((float(ins_gt[idx][0]), float(ins_gt[idx][1]), pi / 180 * float(ins_gt[idx][2])))
 
             # if each images(multi direction) is not synced, pop()
             else:
