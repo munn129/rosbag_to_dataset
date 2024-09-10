@@ -16,7 +16,6 @@ concat_output = os.path.join(output_prefix, '0514/concat')
 
 cam_list = [front_cam, left_cam, right_cam, rear_cam]
 # front_camera_time_list = []
-cam_time_lists = []
 ins_time_list = []
 
 # read ins.csv and save with list
