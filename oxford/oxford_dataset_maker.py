@@ -1,5 +1,6 @@
 import os
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+from math import pi
 
 from sdk.camera_model import CameraModel
 from sdk.image import load_image
@@ -158,6 +159,10 @@ def main():
             ins_save_list.append(ins)
             gt.append(ins_gt[idx])
 
+            # rad to deg
+            # (lat, lon, yaw(rad))
+            gt[-1][-1] = pi / 180 * gt[-1][-1]
+
         # if each images(multi direction) is not synced, pop()
         else:
             if front_flag:
@@ -205,36 +210,24 @@ def main():
         # image concat
         concat_image = image_concat([front_image, rear_image, left_image, right_image])
 
+        # save
+        # image, image names(txt), geotag images(txt), logging
+        # image: return of image_undistort() or image_concat()
+        # image names: f'{date}/{position}/{timestamp}.png'
+        # geotag images: f'{image names} lat lon yaw[deg]'
+
+
+        # image plot
         if is_imshow:
-            while True:
-                cv2.namedWindow('front', cv2.WINDOW_NORMAL)
-                cv2.imshow('front', front_image)
+            position_names = ['front', 'left', 'right', 'rear', 'concat']
+            image_list = [front_image, left_image, right_image, rear_image, concat_image]
 
-                if cv2.waitKey(1) & 0xFF == ord('q'): break
+            for position, image in zip(position_names, image_list):
+                while True:
+                    cv2.namedWindow(position, cv2.WINDOW_NORMAL)
+                    cv2.imshow(position, image)
 
-            while True:
-                cv2.namedWindow('left', cv2.WINDOW_NORMAL)
-                cv2.imshow('left', left_image)
-
-                if cv2.waitKey(1) & 0xFF == ord('q'): break
-            
-            while True:
-                cv2.namedWindow('right', cv2.WINDOW_NORMAL)
-                cv2.imshow('right', right_image)
-
-                if cv2.waitKey(1) & 0xFF == ord('q'): break
-
-            while True:
-                cv2.namedWindow('rear', cv2.WINDOW_NORMAL)
-                cv2.imshow('rear', rear_image)
-
-                if cv2.waitKey(1) & 0xFF == ord('q'): break        
-
-            while True:
-                cv2.namedWindow('concat', cv2.WINDOW_NORMAL)
-                cv2.imshow('concat', concat_image)
-
-                if cv2.waitKey(1) & 0xFF == ord('q'): break
+                    if cv2.waitKey(1) & 0xFF == ord('1'): break
 
             cv2.destroyAllWindows()
 
