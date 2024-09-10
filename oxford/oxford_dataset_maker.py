@@ -228,19 +228,21 @@ def main():
             for position, image ,output, save, postfix in zip(position_names, image_list, output_list, save_list, postfix_list):
                 
                 # image save
-                cv2.imwrite(output, f'{save[idx]}.png', image)
+                image_save_dir = os.path.join(output, f'{save[idx]}.png')
+                cv2.imwrite(image_save_dir, image)
 
                 # imagenames logging
-                with open(f'{date}_{position}_imagenames.txt', 'a') as file:
+                image_names_dir = os.path.join(output_prefix, date, f'{date}_{position}_imagenames.txt')
+                with open(image_names_dir, 'a') as file:
                     file.write(f'{postfix}/{save[idx]}.png\n')
 
                 # geotag image logging
-                with open(f'{date}_{position}_gt.txt', 'a') as file:
+                gt_dir = os.path.join(output_prefix, date, f'{date}_{position}_gt.txt')
+                with open(gt_dir, 'a') as file:
                     file.write(f'{postfix}/{save[idx]}.png {gt[idx][0]} {gt[idx][1]} {gt[idx][2]}\n')
 
                 # image plot
                 if is_imshow:
-                        
                     while True:
                         cv2.namedWindow(position, cv2.WINDOW_NORMAL)
                         cv2.imshow(position, image)
