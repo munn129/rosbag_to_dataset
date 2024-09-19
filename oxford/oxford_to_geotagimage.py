@@ -15,11 +15,11 @@ def image_undistort(image_dir):
 
     return load_image(image_dir, camera_model)
 
-def is_synced(cam, ins, std_time_gap, save_list) -> bool:
+def is_synced(cam, rtk, std_time_gap, save_list) -> bool:
     if (len(save_list) > 1) and save_list[-1] == cam:
         return False
 
-    if abs(int(cam) - int(ins)) < std_time_gap:
+    if abs(int(cam) - int(rtk)) < std_time_gap:
         save_list.append(cam)
         return True
     else:
@@ -49,17 +49,16 @@ def image_concat(images: list):
 def main():
     # params
     # setting input directory
-    date_list = ['0514', '0626']
-    detail_date_list = ['2014-05-14-13-46-12', '2014-06-26-09-24-58']
+    date_list = ['0519', '0828']
+    rtk_date_list = ['2015-05-19-14-06-38', '2015-08-28-09-50-22']
     dataset_root_dir = '/media/moon/moon_ssd/moon_ubuntu'
 
-    for date, detail_date in zip(date_list, detail_date_list):
-        # timestamp,ins_status,latitude,longitude,altitude,northing,easting,down,utm_zone,velocity_north,velocity_east,velocity_down,roll,pitch,yaw
-        ins_csv = f'{dataset_root_dir}/oxford/{date}/{detail_date}_gps/{detail_date}/gps/ins.csv'
-        front_cam_prefix = f'{dataset_root_dir}/oxford/{date}/{detail_date}_stereo_centre_01/{detail_date}'
-        left_cam_prefix = f'{dataset_root_dir}/oxford/{date}/{detail_date}_mono_left_01/{detail_date}'
-        right_cam_prefix = f'{dataset_root_dir}/oxford/{date}/{detail_date}_mono_right_01/{detail_date}'
-        rear_cam_prefix = f'{dataset_root_dir}/oxford/{date}/{detail_date}_mono_rear_01/{detail_date}'
+    for date, rtk_date in zip(date_list, rtk_date_list):
+        rtk_csv = f'{dataset_root_dir}/oxford/rtk/{rtk_date}/rtk.csv'
+        front_cam_prefix = f'{dataset_root_dir}/oxford/{date}/stereo_centre'
+        left_cam_prefix = f'{dataset_root_dir}/oxford/{date}/mono_left'
+        right_cam_prefix = f'{dataset_root_dir}/oxford/{date}/mono_right'
+        rear_cam_prefix = f'{dataset_root_dir}/oxford/{date}/mono_rear'
 
         front_cam_timestamp = os.path.join(front_cam_prefix, 'stereo.timestamps')
         left_cam_timestamp = os.path.join(left_cam_prefix, 'mono_left.timestamps')
@@ -83,20 +82,20 @@ def main():
 
         cam_timestamp_dir = [front_cam_timestamp, left_cam_timestamp, right_cam_timestamp, rear_cam_timestamp]
 
-        # read ins.csv and save timestamp and gt(lat, lon, yaw)
-        ins_timestamp = []
-        ins_gt = [] # (latitude, longitude, yaw)
-        with open(ins_csv, 'r') as file:
+        # read rtk.csv and save timestamp and gt(lat, lon, yaw)
+        # timestamp,latitude,longitude,altitude,northing,easting,down,utm_zone,velocity_north,velocity_east,velocity_down,roll,pitch,yaw
+        rtk_timestamp = []
+        rtk_gt = [] # (latitude, longitude, yaw)
+        with open(rtk_csv, 'r') as file:
             for line in file:
                 if line[0] == 't': continue
                 content = line.split(',')
-                if content[1] == 'INS_SOLUTION_GOOD':
-                    ins_timestamp.append(content[0])
-                    ins_gt.append((content[2], content[3],content[-1]))
+                rtk_timestamp.append(content[0])
+                rtk_gt.append((content[1], content[2],content[-1]))
         
         print('------------------------PROGRESS REPORT----------------------------')
-        print(f'length of ins list: {len(ins_timestamp)}')
-        print(f'length of gt list: {len(ins_gt)}')
+        print(f'length of rtk list: {len(rtk_timestamp)}')
+        print(f'length of gt list: {len(rtk_gt)}')
 
         # read camera timestamps and save with list
         front_time_list = []
@@ -118,7 +117,7 @@ def main():
         print(f'length of rear time list: {len(rear_time_list)}')
 
         # time synced list
-        ins_save_list = []
+        rtk_save_list = []
         gt = []
         front_save_list = []
         left_save_list = []
@@ -132,35 +131,35 @@ def main():
 
         std_time_gap = 30000 # 30ms
 
-        for idx, ins in enumerate(ins_timestamp):
+        for idx, rtk in enumerate(rtk_timestamp):
 
             for cam in front_time_list:
-                if is_synced(cam, ins, std_time_gap, front_save_list):
+                if is_synced(cam, rtk, std_time_gap, front_save_list):
                     front_flag = True
                     break
 
             for cam in left_time_list:
-                if is_synced(cam, ins, std_time_gap, left_save_list):
+                if is_synced(cam, rtk, std_time_gap, left_save_list):
                     left_flag = True
                     break
             
             for cam in right_time_list:
-                if is_synced(cam, ins, std_time_gap, right_save_list):
+                if is_synced(cam, rtk, std_time_gap, right_save_list):
                     right_flag = True
                     break
 
             for cam in rear_time_list:
-                if is_synced(cam, ins, std_time_gap, rear_save_list):
+                if is_synced(cam, rtk, std_time_gap, rear_save_list):
                     rear_flag = True
                     break
 
             # sync check
             # if all flags are True, it is synced.
             if front_flag and left_flag and right_flag and rear_flag:
-                ins_save_list.append(ins)
+                rtk_save_list.append(rtk)
                 # rad to deg
-                # (lat, lon, yaw(rad))
-                gt.append((float(ins_gt[idx][0]), float(ins_gt[idx][1]), pi / 180 * float(ins_gt[idx][2])))
+                # (lat, lon, yaw(deg))
+                gt.append((float(rtk_gt[idx][0]), float(rtk_gt[idx][1]), 180/pi * float(rtk_gt[idx][2])))
 
             # if each images(multi direction) is not synced, pop()
             else:
@@ -183,27 +182,27 @@ def main():
             rear_flag = False
 
         print('------------------------PROGRESS REPORT----------------------------')
-        print(f'length of ins save list: {len(ins_save_list)}')
+        print(f'length of rtk save list: {len(rtk_save_list)}')
         print(f'length of gt list: {len(gt)}')
         print(f'length of front save list: {len(front_save_list)}')
         print(f'length of left save list: {len(left_save_list)}')
         print(f'length of right save list: {len(right_save_list)}')
         print(f'length of rear save list: {len(rear_save_list)}')
 
-        front_image_dir = os.path.join(front_cam_prefix, 'stereo', 'centre')
-        left_image_dir = os.path.join(left_cam_prefix, 'mono_left')
-        right_image_dir = os.path.join(right_cam_prefix, 'mono_right')
-        rear_image_dir = os.path.join(rear_cam_prefix, 'mono_rear')
+        front_image_dir = os.path.join(front_cam_prefix, 'images')
+        left_image_dir = os.path.join(left_cam_prefix, 'images')
+        right_image_dir = os.path.join(right_cam_prefix, 'images')
+        rear_image_dir = os.path.join(rear_cam_prefix, 'images')
 
         is_imshow = False
 
         position_names = ['front', 'left', 'right', 'rear', 'concat']
         output_list = [front_output, left_output, right_output, rear_output, concat_output]
-        save_list = [front_save_list, left_save_list, right_save_list, rear_save_list, ins_save_list]
+        save_list = [front_save_list, left_save_list, right_save_list, rear_save_list, rtk_save_list]
         postfix_list = [front_post_fix, left_post_fix, right_post_fix, rear_post_fix, concat_post_fix]
 
         # save for dataset
-        for idx in range(len(ins_save_list)):
+        for idx in range(len(rtk_save_list)):
 
             # image undistort
             front_image = image_undistort(os.path.join(front_image_dir, str(front_save_list[idx]) + '.png'))
