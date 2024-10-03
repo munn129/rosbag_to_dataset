@@ -54,15 +54,9 @@ def main():
 
     bag = rosbag.Bag(bag_file, 'r')
 
-    msg_dict = {
-        'lidar' : [],
-        'left_cam' : [],
-        'right_cam' : []
-    }
-
-    cnt = 0
-
-    tmp = []
+    lidar_list = []
+    left_list = []
+    right_list = []
 
     critia = 10000000
 
@@ -70,13 +64,13 @@ def main():
         # print(f'time: {time}, topic: {topic}')
         
         if topic == lidar:
-            msg_dict['lidar'].append(Message(topic, msg, time))
+            lidar_list.append(Message(topic, msg, time))
         elif topic == left_image:
-            msg_dict['left_cam'].append(Message(topic, msg, time))
+            left_list.append(Message(topic, msg, time))
         elif topic == right_image:
-            msg_dict['right_cam'].append(Message(topic, msg, time))
+            right_list.append(Message(topic, msg, time))
         else:
             print('topic name is not matched')
-        
+
 if __name__ == '__main__':
     main()
