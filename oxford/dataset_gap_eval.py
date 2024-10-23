@@ -16,11 +16,11 @@ def gps_to_meter(lat1, long1, lat2, long2) -> float:
     return d * 1000 # meter
 
 def main():
-    # 0519/front/1432044414730300.png 51.7605932001 -1.2612594905 1.7848552051
     # file_dir/name lat lon heading
+    # 0519/front/1432044414730300.png 51.7605932001 -1.2612594905 1.7848552051
+    
     gt_dir = '/media/moon/moon_ssd/moon_ubuntu/icrca/0519/0519_front_gt.txt'
-    gt_dir = '/media/moon/moon_ssd/moon_ubuntu/icrca/0828/0828_front_gt.txt'
-
+    gt_dir = '/media/moon/moon_ssd/moon_ubuntu/icrca/0828/0828_front_gt_10.txt'
 
     past_gps = 0,0
     idx = 0
