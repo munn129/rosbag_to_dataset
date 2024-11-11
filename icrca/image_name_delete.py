@@ -1,10 +1,10 @@
 from random import randint
 
-remove_num = 22000
+remove_iter = 44900
 max = 19000 + 1 # 0828
 max = 18966 + 1 # 0519
 
-gap = '150'
+gap = '500'
 
 input_file = '/media/moon/moon_ssd/moon_ubuntu/icrca/0828/0828_front_gt.txt'
 input_file = '/media/moon/moon_ssd/moon_ubuntu/icrca/0519/0519_front_gt.txt'
@@ -12,7 +12,7 @@ input_file = '/media/moon/moon_ssd/moon_ubuntu/icrca/0519/0519_front_gt.txt'
 output_file = f'{input_file[:-4]}_{gap}.txt'
 
 remove_index = []
-for _ in range(remove_num):
+for _ in range(remove_iter):
     
     random_int = randint(1, max)
     

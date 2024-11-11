@@ -1,6 +1,6 @@
 
-date_list = ['0519', '0828']
-gap_list = ['050', '075', '100', '125', '150']
+date_list = ['0519']
+gap_list = ['200', '300', '400', '500']
 
 
 for date in date_list:

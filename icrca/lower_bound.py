@@ -13,12 +13,12 @@ def gps_to_meter(lat1, long1, lat2, long2) -> float:
     
     return d * 1000 # meter
 
-gap_list = ['050', '075', '100', '125', '150']
+gap_list = ['200', '300', '400', '500']
 
 for gap in gap_list:
     
     dataset_dir = f'/media/moon/moon_ssd/moon_ubuntu/icrca/0519/0519_front_gt_{gap}.txt'
-    query_dir = f'/media/moon/moon_ssd/moon_ubuntu/icrca/0828/0828_front_gt_{gap}.txt'
+    query_dir = f'/media/moon/moon_ssd/moon_ubuntu/icrca/0828/0828_front_gt_050.txt'
 
     dataset_list = []
     query_list = []
@@ -60,5 +60,39 @@ for gap in gap_list:
         upper_bound_sum += upper_bound
         idx += 1
 
-    print(f'{gap} lower bound: {lower_bound/idx}')
-    print(f'{gap} upper bound: {upper_bound/idx}')
+    print(f'{gap} lower bound: {lower_bound_sum/idx}')
+    print(f'{gap} upper bound: {upper_bound_sum/idx}')
+
+'''
+case 1
+050 lower bound: 1.6301831488280807
+050 upper bound: 1076.521098478386
+075 lower bound: 1.7011705516826126
+075 upper bound: 1077.3452192291245
+100 lower bound: 1.7839971205349365
+100 upper bound: 1077.1412476047665
+125 lower bound: 1.866460305627852
+125 upper bound: 1074.570864316501
+150 lower bound: 1.995439829119352
+150 upper bound: 1081.2997993620775
+
+case 2: dataset 050
+075 lower bound: 1.6359232628959217
+075 upper bound: 1077.348836032986
+100 lower bound: 1.6385042237970313
+100 upper bound: 1077.1448029265787
+125 lower bound: 1.6243422831436478
+125 upper bound: 1074.6485740477037
+150 lower bound: 1.6390546402587445
+150 upper bound: 1081.3101776738724
+
+case 3: query 050
+075 lower bound: 1.6946284775630838
+075 upper bound: 1076.5175003109184
+100 lower bound: 1.7777528344113933
+100 upper bound: 1076.5175140727836
+125 lower bound: 1.8729542059492506
+125 upper bound: 1076.4452932119545
+150 lower bound: 1.9797875803720522
+150 upper bound: 1076.5107151883637
+'''
